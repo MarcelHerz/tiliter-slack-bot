@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: tiliter-slack-bot
+    env: python
+    buildCommand: ""
+    startCommand: python app.py
+    plan: free
+    envVars:
+      - key: SLACK_TOKEN
+        sync: false
+      - key: SLACK_SIGNING_SECRET
+        sync: false
+      - key: TILITER_API_KEY
+        sync: false
