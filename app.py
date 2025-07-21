@@ -71,13 +71,13 @@ def handle_image(image_url, object_name=None):
     image_b64 = base64.b64encode(image_response.content).decode('utf-8')
     payload = {
         "image_data": image_b64,
-        "file_type": "jpg",
-        "objects_specified": object_list,  # already correct
-        "disable_default_object_detection": True  # <-- NEW
+        "file_type": "jpg"
     }
+
     if object_name:
         object_list = [o.strip() for o in object_name.split(",") if o.strip()]
         payload["objects_specified"] = object_list
+        payload["disable_default_object_detection"] = True
         print(f"🔍 Parsed object list: {object_list}")
 
     print("📤 Sending to Tiliter API...")
