@@ -44,13 +44,19 @@ def slack_events():
                     image_url = file['url_private']
                     channel = event['channel']
                     thread_ts = event['ts']
-                    result = handle_image(image_url)
-                    post_to_slack(channel, thread_ts, result)
+                        user_text = event.get("text", "").strip().lower()
+                        object_name = None
+
+                        if user_text.startswith("count"):
+                                object_name = user_text.replace("count", "").strip()
+                            
+                        result = handle_image(image_url, object_name)
+                                post_to_slack(channel, thread_ts, result)
         return make_response("OK", 200)
 
     return make_response("Ignored", 200)
 
-def handle_image(image_url):
+def handle_image(image_url, object_name=None):
     print("⬇️ Downloading image from Slack...")
     image_response = requests.get(
         image_url,
@@ -65,6 +71,8 @@ def handle_image(image_url):
         "image_data": image_b64,
         "file_type": "jpg"
     }
+    if object_name:
+        payload["objects_specified"] = object_name
 
     print("📤 Sending to Tiliter API...")
     response = requests.post(
@@ -82,12 +90,19 @@ def handle_image(image_url):
     try:
         result = response.json().get("result", {})
         counts = result.get("object_counts", {})
+        
         if not counts:
-            return ":x: No objects found."
+            return f":x: No objects found for '{object_name}'." if object_name else ":x: No objects found."
 
         total = result.get("total_objects")
         details = "\n".join([f"- {k}: {v}" for k, v in counts.items()])
-        return f":white_check_mark: Total objects: {total}\n{details}"
+        title = f":white_check_mark: Total objects: {total}"
+        if object_name:
+            title += f" (looking for *{object_name}*)"
+        else:
+            title += " (no object specified — showing all detected)"
+        return f"{title}\n{details}"
+    
     except Exception as e:
         return f":x: Could not parse Tiliter response:\n{str(e)}"
 
