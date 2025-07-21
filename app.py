@@ -74,7 +74,7 @@ def handle_image(image_url, object_name=None):
         "file_type": "jpg"
     }
     if object_name:
-        payload["objects_specified"] = object_name
+        payload["objects_specified"] = [object_name]
     print(f"📦 Payload being sent: {json.dumps(payload, indent=2)}")
 
     print("📤 Sending to Tiliter API...")
