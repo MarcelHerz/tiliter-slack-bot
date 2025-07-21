@@ -77,7 +77,6 @@ def handle_image(image_url, object_name=None):
         payload["objects_specified"] = object_name
     print(f"📦 Payload being sent: {json.dumps(payload, indent=2)}")
 
-
     print("📤 Sending to Tiliter API...")
     response = requests.post(
         TILITER_URL,
@@ -92,26 +91,22 @@ def handle_image(image_url, object_name=None):
         return f":x: Tiliter API error {response.status_code}: {response.text}"
 
     try:
-    result = response.json().get("result", {})
-    counts = result.get("object_counts", {})
-    total = result.get("total_objects", 0)
+        result = response.json().get("result", {})
+        counts = result.get("object_counts", {})
+        total = result.get("total_objects", 0)
 
-    if not counts:
-        return f":x: No objects found for '{object_name}'." if object_name else ":x: No objects found."
+        if not counts:
+            return f":x: No objects found for '{object_name}'." if object_name else ":x: No objects found."
 
-    title = f":white_check_mark: Total objects: {total}"
-    if object_name:
-        title += f" (looking for *{object_name}*)"
+        title = f":white_check_mark: Total objects: {total}"
+        if object_name:
+            title += f" (looking for *{object_name}*)"
 
-    # Format each found object and its count
-    details = "\n".join([f"- {obj}: {count}" for obj, count in counts.items()])
+        details = "\n".join([f"- {obj}: {count}" for obj, count in counts.items()])
+        return f"{title}\n{details}"
 
-    return f"{title}\n{details}"
-
-except Exception as e:
-    return f":x: Could not parse Tiliter response:\n{str(e)}"
-
-
+    except Exception as e:
+        return f":x: Could not parse Tiliter response:\n{str(e)}"
 
 def post_to_slack(channel, thread_ts, message):
     print("💬 Posting result back to Slack...")
@@ -130,4 +125,3 @@ def post_to_slack(channel, thread_ts, message):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
-
