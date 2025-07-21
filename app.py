@@ -104,12 +104,13 @@ def handle_image(image_url, object_name=None):
         if not counts:
             return f":x: No objects found for '{object_name}'." if object_name else ":x: No objects found."
 
-        title = f":white_check_mark: Total objects: {total}"
+        title = f":white_check_mark: *Total objects found*: {total}"
         if object_name:
-            title += f" (looking for *{object_name}*)"
+            title += f"\n:mag: *Looking for*: {object_name}"
 
-        details = "\n".join([f"- {obj}: {count}" for obj, count in counts.items()])
-        return f"{title}\n{details}"
+        details = "\n".join([f"• {obj}: {count}" for obj, count in counts.items()])
+        return f"🧠 Tiliter Result:\n{title}\n\n🔢 *Breakdown*:\n{details}"
+
 
     except Exception as e:
         return f":x: Could not parse Tiliter response:\n{str(e)}"
