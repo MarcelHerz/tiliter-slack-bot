@@ -71,7 +71,9 @@ def handle_image(image_url, object_name=None):
     image_b64 = base64.b64encode(image_response.content).decode('utf-8')
     payload = {
         "image_data": image_b64,
-        "file_type": "jpg"
+        "file_type": "jpg",
+        "objects_specified": object_list,  # already correct
+        "disable_default_object_detection": True  # <-- NEW
     }
     if object_name:
         object_list = [o.strip() for o in object_name.split(",") if o.strip()]
