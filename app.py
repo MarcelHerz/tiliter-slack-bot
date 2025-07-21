@@ -80,13 +80,17 @@ def handle_image(image_url):
         return f":x: Tiliter API error {response.status_code}: {response.text}"
 
     try:
-        raw = response.json()['result']['response']
-        raw = raw.strip("```json").strip("```")
-        parsed = json.loads(raw)
-        counts = parsed.get("object_counts", {})
-        return "\n".join([f"- {k}: {v}" for k, v in counts.items()]) or ":x: No objects found."
+        result = response.json().get("result", {})
+        counts = result.get("object_counts", {})
+        if not counts:
+            return ":x: No objects found."
+
+        total = result.get("total_objects")
+        details = "\n".join([f"- {k}: {v}" for k, v in counts.items()])
+        return f":white_check_mark: Total objects: {total}\n{details}"
     except Exception as e:
         return f":x: Could not parse Tiliter response:\n{str(e)}"
+
 
 def post_to_slack(channel, thread_ts, message):
     print("💬 Posting result back to Slack...")
