@@ -69,10 +69,13 @@ def handle_image(image_url, object_name=None):
         return f":x: Failed to download image. Status: {image_response.status_code}"
 
     image_b64 = base64.b64encode(image_response.content).decode('utf-8')
+    image_data_with_prefix = f"data:image/jpeg;base64,{image_b64}"
+
     payload = {
-        "image_data": image_b64,
-        "file_type": "jpg"
+        "image_data": image_data_with_prefix,
+        "parameter": f"count {object_name}" if object_name else "count all"
     }
+
 
     if object_name:
         object_list = [o.strip() for o in object_name.split(",") if o.strip()]
