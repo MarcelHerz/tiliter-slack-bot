@@ -44,14 +44,16 @@ def slack_events():
                     image_url = file['url_private']
                     channel = event['channel']
                     thread_ts = event['ts']
-                        user_text = event.get("text", "").strip().lower()
-                        object_name = None
+            
+                    user_text = event.get("text", "").strip().lower()
+                    object_name = None
+            
+                    if user_text.startswith("count"):
+                        object_name = user_text.replace("count", "").strip()
+            
+                    result = handle_image(image_url, object_name)
+                    post_to_slack(channel, thread_ts, result)
 
-                        if user_text.startswith("count"):
-                                object_name = user_text.replace("count", "").strip()
-                            
-                        result = handle_image(image_url, object_name)
-                                post_to_slack(channel, thread_ts, result)
         return make_response("OK", 200)
 
     return make_response("Ignored", 200)
