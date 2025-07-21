@@ -126,7 +126,7 @@ def post_to_slack(channel, thread_ts, message):
         json={
             'channel': channel,
             'thread_ts': thread_ts,
-            'text': f"🧠 Tiliter Result:\n{message}"
+            'text': message
         }
     )
 
