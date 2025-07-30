@@ -197,9 +197,18 @@ def post_to_slack(channel, thread_ts, message):
         json={
             'channel': channel,
             'thread_ts': thread_ts,
-            'text': message
+            'blocks': [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": message
+                    }
+                }
+            ]
         }
     )
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
