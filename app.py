@@ -13,6 +13,7 @@ TILITER_URL = 'https://api.ai.vision.tiliter.com/api/v1/inference/object-counter
 
 # In-memory tracking of processed events
 processed_events = set()
+agent_selection_by_user = {}  # { user_id: agent_type }
 
 @app.route("/")
 def health():
@@ -51,12 +52,29 @@ def slack_events():
                     if user_text.startswith("count"):
                         object_name = user_text.replace("count", "").strip()
             
-                    result = handle_image(image_url, object_name)
+                    user_id = event.get("user")
+                    agent_type = agent_selection_by_user.get(user_id, "object-counter")
+                    result = handle_image(image_url, object_name, agent_type)
                     post_to_slack(channel, thread_ts, result)
 
         return make_response("OK", 200)
 
     return make_response("Ignored", 200)
+
+@app.route("/interact", methods=["POST"])
+def slack_interact():
+    payload = json.loads(request.form["payload"])
+    print("🎯 Interactivity payload:")
+    print(json.dumps(payload, indent=2))
+
+    user_id = payload["user"]["id"]
+    selected = payload["actions"][0]["selected_option"]["value"]  # e.g. "receipt-processor"
+
+    # Store the agent type per user
+    agent_selection_by_user[user_id] = selected
+
+    return make_response(f"✅ Agent set to `{selected}` for all your uploads.", 200)
+
 
 def format_agent_response(agent_type, response_json):
     try:
