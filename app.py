@@ -58,6 +58,51 @@ def slack_events():
 
     return make_response("Ignored", 200)
 
+def format_agent_response(agent_type, response_json):
+    try:
+        if agent_type == "object-counter":
+            result = response_json.get("result", {})
+            counts = result.get("object_counts", {})
+            total = result.get("total_objects", 0)
+            details = "\n".join([f"🔹 `{k}` — `{v}`" for k, v in counts.items()])
+            return f"✅ *Object Counter*\n- *Total:* {total}\n\n*Breakdown:*\n{details}"
+
+        elif agent_type == "object-validator":
+            results = response_json["validation_results"]
+            lines = [f"{r['status']} `{r['object']}` ({r['confidence']*100:.1f}%)" for r in results]
+            return f"✅ *Object Validator*\n{chr(10).join(lines)}"
+
+        elif agent_type == "label-validator":
+            return f"❌ *Label Validator*\nExpected: `{response_json.get('expected_text')}`\nFound: `{response_json.get('extracted_text')}`\nConfidence: {response_json.get('match_confidence')}"
+
+        elif agent_type == "damage-detector":
+            areas = response_json["damage_areas"]
+            lines = [
+                f"🔸 `{a['type']}` ({a['severity']}) @ {a['location']} – {a['confidence']*100:.1f}%"
+                for a in areas
+            ]
+            return f"🛠️ *Damage Detector*\nLevel: `{response_json['damage_level']}`\n\n" + "\n".join(lines)
+
+        elif agent_type == "cleanliness-score":
+            issues = response_json["issues_detected"]
+            lines = [f"🔸 `{i['type']}` ({i['severity']}) at `{i['location']}`" for i in issues]
+            return f"🧼 *Cleanliness Score: {response_json['score_display']}*\nLevel: {response_json['cleanliness_level']}\n\n" + "\n".join(lines)
+
+        elif agent_type == "text-extractor":
+            items = response_json["extracted_text"]
+            lines = [f"🔹 `{i['text']}` ({i['confidence']*100:.1f}%)" for i in items]
+            return f"📝 *Text Extractor*\nDetected Text Blocks:\n" + "\n".join(lines)
+
+        elif agent_type == "receipt-processor":
+            lines = [f"- `{item['name']}` — €{item['price']:.2f}" for item in response_json["items"]]
+            return f"🧾 *Receipt: {response_json['merchant']}*\nTotal: €{response_json['total']:.2f}\nDate: {response_json['date']}\n\n*Items:*\n" + "\n".join(lines)
+
+        else:
+            return ":grey_question: Unknown agent type. Raw output:\n```" + json.dumps(response_json, indent=2) + "```"
+
+    except Exception as e:
+        return f":x: Error formatting response: {str(e)}"
+
 def handle_image(image_url, object_name=None, agent_type="object-counter"):
     print("⬇️ Downloading image from Slack...")
     image_response = requests.get(
@@ -137,52 +182,6 @@ def post_to_slack(channel, thread_ts, message):
             'text': message
         }
     )
-
-def format_agent_response(agent_type, response_json):
-    try:
-        if agent_type == "object-counter":
-            result = response_json.get("result", {})
-            counts = result.get("object_counts", {})
-            total = result.get("total_objects", 0)
-            details = "\n".join([f"🔹 `{k}` — `{v}`" for k, v in counts.items()])
-            return f"✅ *Object Counter*\n- *Total:* {total}\n\n*Breakdown:*\n{details}"
-
-        elif agent_type == "object-validator":
-            results = response_json["validation_results"]
-            lines = [f"{r['status']} `{r['object']}` ({r['confidence']*100:.1f}%)" for r in results]
-            return f"✅ *Object Validator*\n{chr(10).join(lines)}"
-
-        elif agent_type == "label-validator":
-            return f"❌ *Label Validator*\nExpected: `{response_json.get('expected_text')}`\nFound: `{response_json.get('extracted_text')}`\nConfidence: {response_json.get('match_confidence')}"
-
-        elif agent_type == "damage-detector":
-            areas = response_json["damage_areas"]
-            lines = [
-                f"🔸 `{a['type']}` ({a['severity']}) @ {a['location']} – {a['confidence']*100:.1f}%"
-                for a in areas
-            ]
-            return f"🛠️ *Damage Detector*\nLevel: `{response_json['damage_level']}`\n\n" + "\n".join(lines)
-
-        elif agent_type == "cleanliness-score":
-            issues = response_json["issues_detected"]
-            lines = [f"🔸 `{i['type']}` ({i['severity']}) at `{i['location']}`" for i in issues]
-            return f"🧼 *Cleanliness Score: {response_json['score_display']}*\nLevel: {response_json['cleanliness_level']}\n\n" + "\n".join(lines)
-
-        elif agent_type == "text-extractor":
-            items = response_json["extracted_text"]
-            lines = [f"🔹 `{i['text']}` ({i['confidence']*100:.1f}%)" for i in items]
-            return f"📝 *Text Extractor*\nDetected Text Blocks:\n" + "\n".join(lines)
-
-        elif agent_type == "receipt-processor":
-            lines = [f"- `{item['name']}` — €{item['price']:.2f}" for item in response_json["items"]]
-            return f"🧾 *Receipt: {response_json['merchant']}*\nTotal: €{response_json['total']:.2f}\nDate: {response_json['date']}\n\n*Items:*\n" + "\n".join(lines)
-
-        else:
-            return ":grey_question: Unknown agent type. Raw output:\n```" + json.dumps(response_json, indent=2) + "```"
-
-    except Exception as e:
-        return f":x: Error formatting response: {str(e)}"
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
